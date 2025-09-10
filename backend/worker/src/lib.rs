@@ -4,6 +4,7 @@ pub mod swagger_ui;
 use worker::*;
 use worker::d1::D1Type;
 use serde::{Deserialize, Serialize};
+use serde_json;
 
 
 use crate::openapi::openapi_spec;
@@ -20,6 +21,77 @@ struct EditRequest {
     prompt: String,
     #[serde(default)]
     mime_type: String,
+}
+
+#[derive(Deserialize)]
+struct GenerateVideoRequest {
+    prompt: String,
+    #[serde(default)]
+    negative_prompt: Option<String>,
+    #[serde(default)]
+    aspect_ratio: Option<String>,
+    #[serde(default)]
+    resolution: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct EditVideoRequest {
+    prompt: String,
+    image: String,
+    mime_type: String,
+    #[serde(default)]
+    negative_prompt: Option<String>,
+    #[serde(default)]
+    aspect_ratio: Option<String>,
+    #[serde(default)]
+    resolution: Option<String>,
+}
+
+#[derive(Serialize)]
+struct VideoOperationResponse {
+    success: bool,
+    operation_name: Option<String>,
+    error: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct VideoStatusResponse {
+    #[serde(default)]
+    done: bool,
+    response: Option<VideoGenerationResponse>,
+    name: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct VideoGenerationResponse {
+    generate_video_response: GenerateVideoResponse,
+}
+
+#[derive(Deserialize)]
+struct GenerateVideoResponse {
+    generated_samples: Vec<VideoSample>,
+}
+
+#[derive(Deserialize)]
+struct VideoSample {
+    video: VideoFile,
+}
+
+#[derive(Deserialize)]
+struct VideoFile {
+    uri: String,
+}
+
+#[derive(Deserialize)]
+struct GeminiError {
+    error: GeminiErrorDetails,
+}
+
+#[derive(Deserialize)]
+struct GeminiErrorDetails {
+    code: u16,
+    message: String,
+    status: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -175,6 +247,216 @@ fn extract_image_from_response(response: &GeminiResponse) -> Result<String> {
 
     console_log!("No image data found in response");
     Err(worker::Error::RustError("No image data found in response".into()))
+}
+
+async fn call_veo_generate(prompt: &str, negative_prompt: Option<&str>, aspect_ratio: Option<&str>, resolution: Option<&str>, api_key: &str) -> Result<String> {
+    let url = "https://generativelanguage.googleapis.com/v1beta/models/veo-3.0-fast-generate-001:predictLongRunning";
+
+    console_log!("Starting Veo video generation with prompt: {}", prompt);
+    console_log!("Negative prompt: {:?}", negative_prompt);
+    console_log!("Aspect ratio: {:?}", aspect_ratio);
+    console_log!("Resolution: {:?}", resolution);
+
+    let mut instances = serde_json::json!({
+        "prompt": prompt
+    });
+
+    if let Some(neg_prompt) = negative_prompt {
+        instances["negativePrompt"] = serde_json::json!(neg_prompt);
+    }
+
+    let mut parameters = serde_json::json!({});
+    if let Some(ar) = aspect_ratio {
+        parameters["aspectRatio"] = serde_json::json!(ar);
+    }
+    if let Some(res) = resolution {
+        parameters["resolution"] = serde_json::json!(res);
+    }
+
+    let json_body = serde_json::json!({
+        "instances": [instances],
+        "parameters": parameters
+    });
+
+    console_log!("Veo API request body: {}", json_body.to_string());
+
+    let headers = Headers::new();
+    headers.set("Content-Type", "application/json").unwrap();
+    headers.set("x-goog-api-key", api_key).unwrap();
+
+    let request = Request::new_with_init(
+        url,
+        &RequestInit::new()
+            .with_method(Method::Post)
+            .with_headers(headers)
+            .with_body(Some(json_body.to_string().into())),
+    )?;
+
+    console_log!("Sending request to Veo API...");
+    let mut response = Fetch::Request(request).send().await?;
+    console_log!("Veo API response status: {}", response.status_code());
+
+    let text = response.text().await?;
+    console_log!("Veo generate API response length: {} bytes", text.len());
+    console_log!("Veo API response: {}", text);
+
+    // Check if the response is an error
+    if response.status_code() < 200 || response.status_code() >= 300 {
+        // Try to parse as Gemini error response
+        if let Ok(error_response) = serde_json::from_str::<GeminiError>(&text) {
+            let error_msg = match error_response.error.code {
+                429 => "Rate limit exceeded. You've reached your API quota. Please wait a few minutes before trying again.".to_string(),
+                403 => "Access denied. Please check your API key and permissions.".to_string(),
+                400 => format!("Invalid request: {}", error_response.error.message),
+                500 => "Server error. Please try again later.".to_string(),
+                _ => format!("API Error ({}): {}", error_response.error.code, error_response.error.message),
+            };
+            return Err(worker::Error::RustError(error_msg));
+        } else {
+            return Err(worker::Error::RustError(format!("API request failed with status {}: {}", response.status_code(), text)));
+        }
+    }
+
+    let operation_response: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|e| worker::Error::RustError(format!("Failed to parse Veo response: {}", e)))?;
+
+    let operation_name = operation_response["name"]
+        .as_str()
+        .ok_or_else(|| worker::Error::RustError("No operation name in response".into()))?;
+
+    console_log!("Operation name: {}", operation_name);
+    Ok(operation_name.to_string())
+}
+
+async fn call_veo_edit(image_data: &str, mime_type: &str, prompt: &str, negative_prompt: Option<&str>, aspect_ratio: Option<&str>, resolution: Option<&str>, api_key: &str) -> Result<String> {
+    let url = "https://generativelanguage.googleapis.com/v1beta/models/veo-3.0-fast-generate-001:predictLongRunning";
+
+    let mut instances = serde_json::json!({
+        "prompt": prompt,
+        "image": {
+            "bytesBase64Encoded": image_data,
+            "mimeType": mime_type
+        }
+    });
+
+    if let Some(neg_prompt) = negative_prompt {
+        instances["negativePrompt"] = serde_json::json!(neg_prompt);
+    }
+
+    let mut parameters = serde_json::json!({});
+    if let Some(ar) = aspect_ratio {
+        parameters["aspectRatio"] = serde_json::json!(ar);
+    }
+    if let Some(res) = resolution {
+        parameters["resolution"] = serde_json::json!(res);
+    }
+
+    let json_body = serde_json::json!({
+        "instances": [instances],
+        "parameters": parameters
+    });
+
+    let headers = Headers::new();
+    headers.set("Content-Type", "application/json").unwrap();
+    headers.set("x-goog-api-key", api_key).unwrap();
+
+    let request = Request::new_with_init(
+        url,
+        &RequestInit::new()
+            .with_method(Method::Post)
+            .with_headers(headers)
+            .with_body(Some(json_body.to_string().into())),
+    )?;
+
+    let mut response = Fetch::Request(request).send().await?;
+    console_log!("Veo edit API response status: {}", response.status_code());
+
+    let text = response.text().await?;
+    console_log!("Veo edit API response length: {} bytes", text.len());
+    console_log!("Veo edit API response: {}", text);
+
+    // Check if the response is an error
+    if response.status_code() < 200 || response.status_code() >= 300 {
+        // Try to parse as Gemini error response
+        if let Ok(error_response) = serde_json::from_str::<GeminiError>(&text) {
+            let error_msg = match error_response.error.code {
+                429 => "Rate limit exceeded. You've reached your API quota. Please wait a few minutes before trying again.".to_string(),
+                403 => "Access denied. Please check your API key and permissions.".to_string(),
+                400 => format!("Invalid request: {}", error_response.error.message),
+                500 => "Server error. Please try again later.".to_string(),
+                _ => format!("API Error ({}): {}", error_response.error.code, error_response.error.message),
+            };
+            return Err(worker::Error::RustError(error_msg));
+        } else {
+            return Err(worker::Error::RustError(format!("API request failed with status {}: {}", response.status_code(), text)));
+        }
+    }
+
+    let operation_response: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|e| worker::Error::RustError(format!("Failed to parse Veo response: {}", e)))?;
+
+    let operation_name = operation_response["name"]
+        .as_str()
+        .ok_or_else(|| worker::Error::RustError("No operation name in response".into()))?;
+
+    Ok(operation_name.to_string())
+}
+
+async fn poll_video_operation(operation_name: &str, api_key: &str) -> Result<VideoStatusResponse> {
+    let url = format!("https://generativelanguage.googleapis.com/v1beta/{}", operation_name);
+
+    console_log!("Polling video operation: {}", operation_name);
+
+    let headers = Headers::new();
+    headers.set("x-goog-api-key", api_key).unwrap();
+
+    let request = Request::new_with_init(
+        &url,
+        &RequestInit::new()
+            .with_method(Method::Get)
+            .with_headers(headers),
+    )?;
+
+    console_log!("Sending poll request to: {}", url);
+    let mut response = Fetch::Request(request).send().await?;
+    console_log!("Poll response status: {}", response.status_code());
+
+    let text = response.text().await?;
+    console_log!("Video operation poll response length: {} bytes", text.len());
+    console_log!("Poll response body: {}", text);
+
+    let status_response: VideoStatusResponse = serde_json::from_str(&text)
+        .map_err(|e| worker::Error::RustError(format!("Failed to parse operation status: {}", e)))?;
+
+    console_log!("Parsed status - done: {:?}", status_response.done);
+    if status_response.done {
+        console_log!("Video generation completed!");
+    } else {
+        console_log!("Video generation still in progress...");
+    }
+
+    Ok(status_response)
+}
+
+fn extract_video_uri(response: &VideoStatusResponse) -> Result<String> {
+    console_log!("Extracting video URI from response...");
+    console_log!("Response has response field: {}", response.response.is_some());
+
+    if let Some(video_response) = &response.response {
+        console_log!("Video response has generate_video_response field: {}", video_response.generate_video_response.generated_samples.len());
+        if !video_response.generate_video_response.generated_samples.is_empty() {
+            let video_uri = &video_response.generate_video_response.generated_samples[0].video.uri;
+            console_log!("Found video URI: {}", video_uri);
+            return Ok(video_uri.clone());
+        } else {
+            console_log!("generated_samples array is empty");
+        }
+    } else {
+        console_log!("response.response is None");
+    }
+
+    console_log!("No video URI found in response");
+    Err(worker::Error::RustError("No video URI found in response".into()))
 }
 
 // Authentication utilities
@@ -490,6 +772,213 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 }
                 Err(e) => {
                     console_log!("Failed to call Gemini API: {}", e);
+                    Response::ok(format!(r#"{{"success":false,"error":"{}"}}"#, e))
+                        .map(|r| r.with_headers(cors_headers()))
+                }
+            }
+        })
+        .post_async("/generate_video", |mut req, ctx| async move {
+            // Check API key from Authorization header
+            let auth_header = match req.headers().get("Authorization") {
+                Ok(Some(header)) => header,
+                _ => {
+                    return Response::ok("{\"success\":false,\"error\":\"Missing API key\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            let api_key = auth_header.trim_start_matches("Bearer ");
+            if !validate_api_key(&ctx.env, api_key).await.unwrap_or(false) {
+                return Response::ok("{\"success\":false,\"error\":\"Invalid API key\"}")
+                    .map(|r| r.with_headers(cors_headers()));
+            }
+
+            let body = match req.json::<GenerateVideoRequest>().await {
+                Ok(body) => body,
+                Err(_) => {
+                    return Response::ok("{\"success\":false,\"error\":\"Invalid request body\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            let gemini_api_key = match ctx.env.secret("GEMINI_API_KEY") {
+                Ok(key) => key.to_string(),
+                Err(_) => {
+                    return Response::ok("{\"success\":false,\"error\":\"API key not configured\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            match call_veo_generate(
+                &body.prompt,
+                body.negative_prompt.as_deref(),
+                body.aspect_ratio.as_deref(),
+                body.resolution.as_deref(),
+                &gemini_api_key
+            ).await {
+                Ok(operation_name) => {
+                    let response = VideoOperationResponse {
+                        success: true,
+                        operation_name: Some(operation_name),
+                        error: None,
+                    };
+                    Response::ok(serde_json::to_string(&response).unwrap())
+                        .map(|r| r.with_headers(cors_headers()))
+                }
+                Err(e) => {
+                    console_log!("Failed to start video generation: {}", e);
+                    let response = VideoOperationResponse {
+                        success: false,
+                        operation_name: None,
+                        error: Some(e.to_string()),
+                    };
+                    Response::ok(serde_json::to_string(&response).unwrap())
+                        .map(|r| r.with_headers(cors_headers()))
+                }
+            }
+        })
+        .post_async("/edit_video", |mut req, ctx| async move {
+            // Check API key from Authorization header
+            let auth_header = match req.headers().get("Authorization") {
+                Ok(Some(header)) => header,
+                _ => {
+                    return Response::ok("{\"success\":false,\"error\":\"Missing API key\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            let api_key = auth_header.trim_start_matches("Bearer ");
+            if !validate_api_key(&ctx.env, api_key).await.unwrap_or(false) {
+                return Response::ok("{\"success\":false,\"error\":\"Invalid API key\"}")
+                    .map(|r| r.with_headers(cors_headers()));
+            }
+
+            let body = match req.json::<EditVideoRequest>().await {
+                Ok(body) => body,
+                Err(_) => {
+                    return Response::ok("{\"success\":false,\"error\":\"Invalid request body\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            let gemini_api_key = match ctx.env.secret("GEMINI_API_KEY") {
+                Ok(key) => key.to_string(),
+                Err(_) => {
+                    return Response::ok("{\"success\":false,\"error\":\"API key not configured\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            match call_veo_edit(
+                &body.image,
+                &body.mime_type,
+                &body.prompt,
+                body.negative_prompt.as_deref(),
+                body.aspect_ratio.as_deref(),
+                body.resolution.as_deref(),
+                &gemini_api_key
+            ).await {
+                Ok(operation_name) => {
+                    let response = VideoOperationResponse {
+                        success: true,
+                        operation_name: Some(operation_name),
+                        error: None,
+                    };
+                    Response::ok(serde_json::to_string(&response).unwrap())
+                        .map(|r| r.with_headers(cors_headers()))
+                }
+                Err(e) => {
+                    console_log!("Failed to start video editing: {}", e);
+                    let response = VideoOperationResponse {
+                        success: false,
+                        operation_name: None,
+                        error: Some(e.to_string()),
+                    };
+                    Response::ok(serde_json::to_string(&response).unwrap())
+                        .map(|r| r.with_headers(cors_headers()))
+                }
+            }
+        })
+        .get_async("/video_status/*operation", |req, ctx| async move {
+            console_log!("=== VIDEO STATUS ENDPOINT CALLED ===");
+
+            // Check API key from Authorization header
+            let auth_header = match req.headers().get("Authorization") {
+                Ok(Some(header)) => {
+                    console_log!("✅ Found Authorization header: {}", header);
+                    header
+                },
+                _ => {
+                    console_log!("❌ Missing Authorization header");
+                    return Response::ok("{\"success\":false,\"error\":\"Missing API key\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            let api_key = auth_header.trim_start_matches("Bearer ");
+            console_log!("🔑 Extracted API key: {}...", &api_key[..8]);
+
+            let is_valid = validate_api_key(&ctx.env, api_key).await.unwrap_or(false);
+            console_log!("🔐 API key validation result: {}", is_valid);
+
+            if !is_valid {
+                console_log!("❌ API key validation failed - returning error");
+                return Response::ok("{\"success\":false,\"error\":\"Invalid API key\"}")
+                    .map(|r| r.with_headers(cors_headers()));
+            }
+
+            let operation_name = match ctx.param("operation") {
+                Some(name) => {
+                    // Remove leading slash from wildcard parameter
+                    let clean_name = name.trim_start_matches('/');
+                    console_log!("📝 Operation name from URL: {}", clean_name);
+                    clean_name.to_string()
+                },
+                None => {
+                    console_log!("❌ Missing operation name parameter");
+                    return Response::ok("{\"success\":false,\"error\":\"Missing operation name\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            let gemini_api_key = match ctx.env.secret("GEMINI_API_KEY") {
+                Ok(key) => key.to_string(),
+                Err(_) => {
+                    return Response::ok("{\"success\":false,\"error\":\"API key not configured\"}")
+                        .map(|r| r.with_headers(cors_headers()));
+                }
+            };
+
+            console_log!("Video status requested for operation: {}", operation_name);
+
+            match poll_video_operation(&operation_name, &gemini_api_key).await {
+                Ok(status) => {
+                    console_log!("Poll successful, status.done: {:?}", status.done);
+                    console_log!("Status has response: {}", status.response.is_some());
+
+                    if status.done && status.response.is_some() {
+                        console_log!("Video is done, extracting URI...");
+                        match extract_video_uri(&status) {
+                            Ok(video_uri) => {
+                                console_log!("Video URI extracted: {}", video_uri);
+                                let response_json = format!(r#"{{"success":true,"done":true,"video_uri":"{}"}}"#, video_uri);
+                                console_log!("Returning success response with video URI");
+                                Response::ok(response_json).map(|r| r.with_headers(cors_headers()))
+                            }
+                            Err(e) => {
+                                console_log!("Failed to extract video URI: {}", e);
+                                Response::ok(format!(r#"{{"success":false,"done":true,"error":"{}"}}"#, e))
+                                    .map(|r| r.with_headers(cors_headers()))
+                            }
+                        }
+                    } else {
+                        console_log!("Video still in progress, returning done:false");
+                        Response::ok(r#"{"success":true,"done":false}"#)
+                            .map(|r| r.with_headers(cors_headers()))
+                    }
+                }
+                Err(e) => {
+                    console_log!("Failed to poll video operation: {}", e);
                     Response::ok(format!(r#"{{"success":false,"error":"{}"}}"#, e))
                         .map(|r| r.with_headers(cors_headers()))
                 }
