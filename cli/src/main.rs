@@ -94,17 +94,42 @@ enum Commands {
     
     /// Show API version and available endpoints
     Info,
+
+    /// Authentication commands (login, register, logout, status)
+    Auth {
+        #[command(subcommand)]
+        action: AuthAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum AuthAction {
+    /// Register a new account
+    Register,
+
+    /// Login to existing account
+    Login,
+
+    /// Logout and remove stored credentials
+    Logout,
+
+    /// Show authentication status
+    Status,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    let config = Config::load()?;
+    let mut config = Config::load()?;
 
     let api_url = cli.api_url.as_str();
     let output_dir = cli.output.as_deref().or(config.output_dir.as_deref());
-    
-    let client = GeminiClient::new(api_url.to_string());
+
+    let client = if let Some(api_key) = &config.api_key {
+        GeminiClient::with_api_key(api_url.to_string(), api_key.clone())
+    } else {
+        GeminiClient::new(api_url.to_string())
+    };
 
     match cli.command {
         Commands::Generate { prompt, name, save } => {
@@ -141,6 +166,22 @@ async fn main() -> Result<()> {
         }
         Commands::Info => {
             commands::handle_info(&client).await?;
+        }
+        Commands::Auth { action } => {
+            match action {
+                AuthAction::Register => {
+                    commands::handle_register(&client, &mut config).await?;
+                }
+                AuthAction::Login => {
+                    commands::handle_login(&client, &mut config).await?;
+                }
+                AuthAction::Logout => {
+                    commands::handle_logout(&mut config)?;
+                }
+                AuthAction::Status => {
+                    commands::handle_status(&config)?;
+                }
+            }
         }
     }
 

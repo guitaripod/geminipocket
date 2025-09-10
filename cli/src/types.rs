@@ -39,4 +39,25 @@ pub struct HealthResponse {
 pub struct Config {
     pub api_url: Option<String>,
     pub output_dir: Option<PathBuf>,
+    pub api_key: Option<String>,
+    pub email: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RegisterRequest {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LoginRequest {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct AuthResponse {
+    pub success: bool,
+    pub api_key: Option<String>,
+    pub error: Option<String>,
 }

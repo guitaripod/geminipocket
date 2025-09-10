@@ -5,11 +5,12 @@ use reqwest::Client;
 use std::path::Path;
 use std::time::Duration;
 
-use crate::types::{ApiInfo, ApiResponse, EditRequest, GenerateRequest, HealthResponse};
+use crate::types::{ApiInfo, ApiResponse, AuthResponse, EditRequest, GenerateRequest, HealthResponse, LoginRequest, RegisterRequest};
 
 pub struct GeminiClient {
     client: Client,
     api_url: String,
+    api_key: Option<String>,
 }
 
 impl GeminiClient {
@@ -17,20 +18,75 @@ impl GeminiClient {
         Self {
             client: Client::new(),
             api_url,
+            api_key: None,
+        }
+    }
+
+    pub fn with_api_key(api_url: String, api_key: String) -> Self {
+        Self {
+            client: Client::new(),
+            api_url,
+            api_key: Some(api_key),
+        }
+    }
+
+    pub async fn register(&self, email: &str, password: &str) -> Result<AuthResponse> {
+        let response = self
+            .client
+            .post(format!("{}/register", self.api_url))
+            .json(&RegisterRequest {
+                email: email.to_string(),
+                password: password.to_string(),
+            })
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            Ok(response.json().await?)
+        } else {
+            Err(anyhow::anyhow!(
+                "Registration failed with status: {}",
+                response.status()
+            ))
+        }
+    }
+
+    pub async fn login(&self, email: &str, password: &str) -> Result<AuthResponse> {
+        let response = self
+            .client
+            .post(format!("{}/login", self.api_url))
+            .json(&LoginRequest {
+                email: email.to_string(),
+                password: password.to_string(),
+            })
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            Ok(response.json().await?)
+        } else {
+            Err(anyhow::anyhow!(
+                "Login failed with status: {}",
+                response.status()
+            ))
         }
     }
 
     pub async fn generate_image(&self, prompt: &str) -> Result<ApiResponse> {
         let spinner = create_spinner("Generating image...");
 
-        let response = self
+        let mut request = self
             .client
             .post(format!("{}/generate", self.api_url))
             .json(&GenerateRequest {
                 prompt: prompt.to_string(),
-            })
-            .send()
-            .await?;
+            });
+
+        if let Some(api_key) = &self.api_key {
+            request = request.header("Authorization", format!("Bearer {}", api_key));
+        }
+
+        let response = request.send().await?;
 
         spinner.finish_and_clear();
 
@@ -61,16 +117,20 @@ impl GeminiClient {
 
         spinner.set_message("Editing image...");
 
-        let response = self
+        let mut request = self
             .client
             .post(format!("{}/edit", self.api_url))
             .json(&EditRequest {
                 prompt: prompt.to_string(),
                 image: image_base64,
                 mime_type,
-            })
-            .send()
-            .await?;
+            });
+
+        if let Some(api_key) = &self.api_key {
+            request = request.header("Authorization", format!("Bearer {}", api_key));
+        }
+
+        let response = request.send().await?;
 
         spinner.finish_and_clear();
 

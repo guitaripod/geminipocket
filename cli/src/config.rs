@@ -35,6 +35,8 @@ impl Config {
         match key {
             "api_url" => self.api_url = Some(value),
             "output_dir" => self.output_dir = Some(PathBuf::from(value)),
+            "api_key" => self.api_key = Some(value),
+            "email" => self.email = Some(value),
             _ => return Err(anyhow::anyhow!("Unknown config key: {}", key)),
         }
         Ok(())
@@ -44,6 +46,8 @@ impl Config {
         match key {
             "api_url" => self.api_url.clone(),
             "output_dir" => self.output_dir.as_ref().map(|p| p.display().to_string()),
+            "api_key" => self.api_key.clone(),
+            "email" => self.email.clone(),
             _ => None,
         }
     }
