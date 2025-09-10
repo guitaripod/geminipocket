@@ -61,3 +61,49 @@ pub struct AuthResponse {
     pub api_key: Option<String>,
     pub error: Option<String>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct GenerateVideoRequest {
+    pub prompt: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub negative_prompt: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aspect_ratio: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EditVideoRequest {
+    pub prompt: String,
+    pub image: String,
+    pub mime_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub negative_prompt: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub aspect_ratio: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct VideoOperationResponse {
+    pub success: bool,
+    pub operation_name: Option<String>,
+    pub error: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct VideoStatusResponse {
+    pub success: bool,
+    pub done: Option<bool>,
+    pub video_uri: Option<String>,
+    pub error: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ApiVideoResponse {
+    pub success: bool,
+    pub video_uri: Option<String>,
+    pub error: Option<String>,
+}
