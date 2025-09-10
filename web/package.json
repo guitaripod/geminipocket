@@ -1,0 +1,22 @@
+{
+  "name": "geminipocket-web",
+  "version": "0.1.0",
+  "description": "Web interface for GeminiPocket AI image generation and editing",
+  "main": "public/index.html",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "build": "echo 'Static files ready for deployment'",
+    "preview": "npx serve public"
+  },
+  "keywords": [
+    "ai",
+    "image-generation",
+    "gemini",
+    "web-app"
+  ],
+  "author": "guitaripod",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}

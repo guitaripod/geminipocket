@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeminiPocket - AI Image Generation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>GeminiPocket</h1>
+            <p>AI-powered image generation and editing using Google Gemini</p>
+        </header>
+
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showSection('generate', this)">Generate Image</button>
+            <button class="nav-btn" onclick="showSection('edit', this)">Edit Image</button>
+            <button class="nav-btn" onclick="showSection('docs', this)">API Docs</button>
+        </nav>
+
+        <!-- Generate Section -->
+        <section id="generate" class="section active">
+            <h2>Generate Image from Text</h2>
+
+            <div class="form-group">
+                <label for="generate-prompt">Describe the image you want to create:</label>
+                <textarea
+                    id="generate-prompt"
+                    rows="4"
+                    placeholder="A beautiful sunset over mountains with a lake in the foreground, photorealistic, 4k quality..."
+                    maxlength="10000"
+                ></textarea>
+                <div class="char-count">
+                    <span id="char-count">0</span>/10000 characters
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Quick Examples:</label>
+                <div class="examples">
+                    <span class="example-tag" onclick="setPrompt('A futuristic robot standing in a modern office, photorealistic, dramatic lighting')">Futuristic Robot</span>
+                    <span class="example-tag" onclick="setPrompt('A serene mountain landscape at dawn, with mist rolling through the valleys')">Mountain Landscape</span>
+                    <span class="example-tag" onclick="setPrompt('An abstract geometric pattern with vibrant colors and flowing shapes')">Abstract Art</span>
+                    <span class="example-tag" onclick="setPrompt('A cute cartoon character with big eyes and colorful hair')">Cartoon Character</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateImage()" id="generate-btn">
+                <span class="loading" id="generate-loading"></span>
+                Generate Image
+            </button>
+
+            <div id="generate-result" class="result-container">
+                <div id="generate-status"></div>
+                <img id="generated-image" class="result-image" />
+                <button class="btn btn-secondary" onclick="downloadImage('generated-image')" id="download-generate-btn">
+                    Download Image
+                </button>
+            </div>
+        </section>
+
+        <!-- Edit Section -->
+        <section id="edit" class="section">
+            <h2>Edit Existing Image</h2>
+
+            <div class="form-group">
+                <label>Upload an image to edit:</label>
+                <div class="file-input-container" id="file-drop-zone">
+                    <input type="file" id="edit-file" class="file-input" accept="image/*" onchange="handleFileSelect(event)" />
+                    <div class="file-input-label">
+                        <div>📁</div>
+                        <div>Click to select or drag and drop an image</div>
+                        <div>PNG, JPG, GIF, WebP supported</div>
+                    </div>
+                </div>
+                <img id="edit-preview" class="image-preview" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-prompt">Describe how to edit the image:</label>
+                <textarea
+                    id="edit-prompt"
+                    rows="3"
+                    placeholder="Add a rainbow to the sky, make the background more dramatic, change the colors..."
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Quick Edit Examples:</label>
+                <div class="examples">
+                    <span class="example-tag" onclick="setEditPrompt('Add a dramatic sunset background')">Add Sunset</span>
+                    <span class="example-tag" onclick="setEditPrompt('Transform into a cartoon style')">Make Cartoon</span>
+                    <span class="example-tag" onclick="setEditPrompt('Add snow and winter atmosphere')">Winter Theme</span>
+                    <span class="example-tag" onclick="setEditPrompt('Convert to black and white')">Black & White</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="editImage()" id="edit-btn" disabled>
+                <span class="loading" id="edit-loading"></span>
+                Edit Image
+            </button>
+
+            <div id="edit-result" class="result-container">
+                <div id="edit-status"></div>
+                <div class="comparison-container" id="comparison-container">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Original</div>
+                        <img id="original-image" class="result-image" />
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Edited</div>
+                        <img id="edited-image" class="result-image" />
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="downloadImage('edited-image')" id="download-edit-btn">
+                    Download Edited Image
+                </button>
+            </div>
+        </section>
+
+        <!-- Docs Section -->
+        <section id="docs" class="section">
+            <h2>API Documentation</h2>
+
+            <div class="docs-content">
+                <h3>Available Endpoints</h3>
+
+                <div class="endpoint">
+                    <h4>POST /generate</h4>
+                    <p>Generate a new image from a text prompt</p>
+                    <code>{"prompt": "A beautiful landscape"}</code>
+                </div>
+
+                <div class="endpoint">
+                    <h4>POST /edit</h4>
+                    <p>Edit an existing image with a text prompt</p>
+                    <code>{"prompt": "Add flowers", "image": "base64...", "mime_type": "image/png"}</code>
+                </div>
+
+                <div class="endpoint">
+                    <h4>GET /health</h4>
+                    <p>Check API health status</p>
+                </div>
+
+                <div class="endpoint">
+                    <h4>GET /openapi</h4>
+                    <p>Get OpenAPI specification</p>
+                </div>
+
+                <div class="docs-actions">
+                    <a href="/docs" class="btn btn-primary">Interactive API Docs</a>
+                    <a href="/openapi" class="btn btn-secondary">OpenAPI JSON</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>
+            Powered by <a href="https://ai.google.dev/" target="_blank">Google Gemini</a> |
+            Built with <a href="https://workers.cloudflare.com/" target="_blank">Cloudflare Workers</a> |
+            <a href="https://github.com/sst/opencode" target="_blank">View Source</a>
+        </p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
