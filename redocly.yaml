@@ -1,0 +1,11 @@
+extends:
+  - recommended
+
+rules:
+  # Turn off warnings that are not critical for this API
+  no-server-example.com: off  # Localhost is expected for development
+  operation-4xx-response: off  # Simple GET endpoints don't need 4XX responses
+
+apis:
+  main:
+    root: ./openapi-spec.json

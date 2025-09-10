@@ -26,27 +26,7 @@ pub fn openapi_spec() -> serde_json::Value {
             }
         ],
         "paths": {
-            "/": {
-                "get": {
-                    "summary": "API Documentation",
-                    "description": "Returns the Swagger UI for interactive API documentation",
-                    "operationId": "getApiDocs",
-                    "tags": ["System"],
-                    "responses": {
-                        "200": {
-                            "description": "Swagger UI documentation page",
-                            "content": {
-                                "text/html": {
-                                    "schema": {
-                                        "type": "string",
-                                        "description": "HTML page with Swagger UI"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+
             "/health": {
                 "get": {
                     "summary": "Health Check",
@@ -91,69 +71,9 @@ pub fn openapi_spec() -> serde_json::Value {
                      }
                  }
              },
-             "/docs": {
-                 "get": {
-                     "summary": "API Documentation",
-                     "description": "Returns the Swagger UI for interactive API documentation",
-                     "operationId": "getApiDocs",
-                     "tags": ["System"],
-                     "responses": {
-                         "200": {
-                             "description": "Swagger UI documentation page",
-                             "content": {
-                                 "text/html": {
-                                     "schema": {
-                                         "type": "string",
-                                         "description": "HTML page with Swagger UI"
-                                     }
-                                 }
-                             }
-                         }
-                     }
-                 }
-             },
-             "/styles.css": {
-                 "get": {
-                     "summary": "Stylesheet",
-                     "description": "Returns the CSS stylesheet for the web interface",
-                     "operationId": "getStyles",
-                     "tags": ["System"],
-                     "responses": {
-                         "200": {
-                             "description": "CSS stylesheet retrieved successfully",
-                             "content": {
-                                 "text/css": {
-                                     "schema": {
-                                         "type": "string",
-                                         "description": "CSS stylesheet content"
-                                     }
-                                 }
-                             }
-                         }
-                     }
-                 }
-             },
-             "/app.js": {
-                 "get": {
-                     "summary": "JavaScript Application",
-                     "description": "Returns the JavaScript application code for the web interface",
-                     "operationId": "getAppJs",
-                     "tags": ["System"],
-                     "responses": {
-                         "200": {
-                             "description": "JavaScript application retrieved successfully",
-                             "content": {
-                                 "application/javascript": {
-                                     "schema": {
-                                         "type": "string",
-                                         "description": "JavaScript application code"
-                                     }
-                                 }
-                             }
-                         }
-                     }
-                 }
-             },
+
+
+
              "/generate": {
                  "post": {
                      "summary": "Generate Image from Text",
