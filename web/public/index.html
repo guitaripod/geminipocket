@@ -21,7 +21,6 @@
             <button class="nav-btn" onclick="showSection('docs', this)">API Docs</button>
         </nav>
 
-        <!-- Auth Section -->
         <section id="auth" class="section active">
             <h2>Authentication</h2>
 
@@ -31,7 +30,6 @@
                     <button class="auth-tab" onclick="showAuthTab('register', this)">Register</button>
                 </div>
 
-                <!-- Login Form -->
                 <div id="login-form" class="auth-form active">
                     <h3>Login to Your Account</h3>
                     <form onsubmit="handleLogin(event)">
@@ -48,7 +46,6 @@
                     <div id="login-status" class="auth-status"></div>
                 </div>
 
-                <!-- Register Form -->
                 <div id="register-form" class="auth-form">
                     <h3>Create New Account</h3>
                     <form onsubmit="handleRegister(event)">
@@ -69,7 +66,6 @@
                     <div id="register-status" class="auth-status"></div>
                 </div>
 
-                <!-- Auth Status -->
                 <div id="auth-status" class="auth-info">
                     <div id="user-info"></div>
                     <button class="btn btn-secondary" onclick="handleLogout()" id="logout-btn" style="display: none;">Logout</button>
@@ -77,7 +73,6 @@
             </div>
         </section>
 
-        <!-- Generate Section -->
         <section id="generate" class="section">
             <h2>Generate Image from Text</h2>
 
@@ -118,7 +113,6 @@
             </div>
         </section>
 
-        <!-- Edit Section -->
         <section id="edit" class="section">
             <h2>Edit Existing Image</h2>
 
@@ -177,7 +171,6 @@
             </div>
         </section>
 
-        <!-- Generate Video Section -->
         <section id="generate_video" class="section">
             <h2>Generate Video from Text</h2>
 
@@ -245,7 +238,6 @@
             </div>
         </section>
 
-        <!-- Edit Video Section -->
         <section id="edit_video" class="section">
             <h2>Edit Image into Video</h2>
 
@@ -331,7 +323,6 @@
             </div>
         </section>
 
-        <!-- Docs Section -->
         <section id="docs" class="section">
             <h2>API Documentation</h2>
 

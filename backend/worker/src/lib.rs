@@ -130,7 +130,7 @@ struct InlineData {
     data: String,
 }
 
-// Authentication types
+
 #[derive(Deserialize)]
 struct RegisterRequest {
     email: String,
@@ -459,7 +459,7 @@ fn extract_video_uri(response: &VideoStatusResponse) -> Result<String> {
     Err(worker::Error::RustError("No video URI found in response".into()))
 }
 
-// Authentication utilities
+
 fn generate_api_key() -> String {
     format!("gp_{}", uuid::Uuid::new_v4().to_string().replace("-", ""))
 }

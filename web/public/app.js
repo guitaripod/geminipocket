@@ -1,10 +1,7 @@
-// Global state
 let currentApiKey = localStorage.getItem('apiKey');
 let currentUser = localStorage.getItem('userEmail');
 
-// Navigation
 function showSection(sectionId, buttonElement) {
-    // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.classList.remove('active');
     });
@@ -12,14 +9,12 @@ function showSection(sectionId, buttonElement) {
         btn.classList.remove('active');
     });
 
-    // Show selected section
     document.getElementById(sectionId).classList.add('active');
     if (buttonElement) {
         buttonElement.classList.add('active');
     }
 }
 
-// Authentication tab switching
 function showAuthTab(tabId, buttonElement) {
     document.querySelectorAll('.auth-form').forEach(form => {
         form.classList.remove('active');
@@ -32,41 +27,34 @@ function showAuthTab(tabId, buttonElement) {
     buttonElement.classList.add('active');
 }
 
-// Character count for generate prompt
 document.getElementById('generate-prompt').addEventListener('input', function() {
     const count = this.value.length;
     document.getElementById('char-count').textContent = count;
 });
 
-// Character count for video generate prompt
 document.getElementById('generate-video-prompt').addEventListener('input', function() {
     const count = this.value.length;
     document.getElementById('video-char-count').textContent = count;
 });
 
-// Set prompt from examples
 function setPrompt(text) {
     document.getElementById('generate-prompt').value = text;
     document.getElementById('generate-prompt').dispatchEvent(new Event('input'));
 }
 
-// Set edit prompt from examples
 function setEditPrompt(text) {
     document.getElementById('edit-prompt').value = text;
 }
 
-// Set video prompt from examples
 function setVideoPrompt(text) {
     document.getElementById('generate-video-prompt').value = text;
     document.getElementById('generate-video-prompt').dispatchEvent(new Event('input'));
 }
 
-// Set edit video prompt from examples
 function setEditVideoPrompt(text) {
     document.getElementById('edit-video-prompt').value = text;
 }
 
-// File handling for edit section
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
@@ -81,7 +69,6 @@ function handleFileSelect(event) {
     }
 }
 
-// Drag and drop for file upload
 const dropZone = document.getElementById('file-drop-zone');
 dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -100,7 +87,6 @@ dropZone.addEventListener('drop', (e) => {
     }
 });
 
-// File handling for video edit section
 function handleVideoFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
@@ -115,7 +101,6 @@ function handleVideoFileSelect(event) {
     }
 }
 
-// Drag and drop for video file upload
 const videoDropZone = document.getElementById('video-file-drop-zone');
 videoDropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -134,7 +119,6 @@ videoDropZone.addEventListener('drop', (e) => {
     }
 });
 
-// Authentication functions
 async function handleLogin(event) {
     event.preventDefault();
 
@@ -162,7 +146,7 @@ async function handleLogin(event) {
             localStorage.setItem('apiKey', currentApiKey);
             localStorage.setItem('userEmail', currentUser);
 
-            updateAuthUI(); // This will show the app and switch to generate section
+            updateAuthUI();
             showStatus('login-status', 'Login successful!', 'success');
         } else {
             showStatus('login-status', data.error || 'Login failed', 'error');
@@ -205,7 +189,7 @@ async function handleRegister(event) {
             localStorage.setItem('apiKey', currentApiKey);
             localStorage.setItem('userEmail', currentUser);
 
-            updateAuthUI(); // This will show the app and switch to generate section
+            updateAuthUI();
             showStatus('register-status', 'Registration successful!', 'success');
         } else {
             showStatus('register-status', data.error || 'Registration failed', 'error');
@@ -220,7 +204,7 @@ function handleLogout() {
     currentUser = null;
     localStorage.removeItem('apiKey');
     localStorage.removeItem('userEmail');
-    updateAuthUI(); // This will hide nav and show only auth section
+    updateAuthUI();
 }
 
 function updateAuthUI() {
@@ -231,17 +215,16 @@ function updateAuthUI() {
     if (currentUser && currentApiKey) {
         userInfo.innerHTML = `<strong>Logged in as:</strong> ${currentUser}`;
         logoutBtn.style.display = 'inline-block';
-        nav.style.display = 'flex'; // Show navigation
-        showSection('generate'); // Show app sections
+        nav.style.display = 'flex';
+        showSection('generate');
     } else {
         userInfo.innerHTML = '<em>Not logged in</em>';
         logoutBtn.style.display = 'none';
-        nav.style.display = 'none'; // Hide navigation
-        showSection('auth'); // Show only auth section
+        nav.style.display = 'none';
+        showSection('auth');
     }
 }
 
-// API functions
 async function generateImage() {
     const prompt = document.getElementById('generate-prompt').value.trim();
     if (!prompt) {
@@ -315,7 +298,6 @@ async function editImage() {
     }
 
     try {
-        // Convert file to base64
         const file = fileInput.files[0];
         const base64 = await fileToBase64(file);
 
@@ -351,7 +333,6 @@ async function editImage() {
     }
 }
 
-// Video generation functions
 async function generateVideo() {
     const prompt = document.getElementById('generate-video-prompt').value.trim();
     const negativePrompt = document.getElementById('generate-video-negative').value.trim();
@@ -392,7 +373,6 @@ async function generateVideo() {
         const data = await response.json();
 
         if (data.success) {
-            // Start polling for completion
             pollVideoStatus(data.operation_name, 'generate-video');
         } else {
             showStatus('generate-video-status', data.error || 'Failed to start video generation', 'error');
@@ -434,7 +414,6 @@ async function editVideo() {
     }
 
     try {
-        // Convert file to base64
         const file = fileInput.files[0];
         const base64 = await fileToBase64(file);
 
@@ -457,7 +436,6 @@ async function editVideo() {
         const data = await response.json();
 
         if (data.success) {
-            // Start polling for completion
             pollVideoStatus(data.operation_name, 'edit-video');
         } else {
             showStatus('edit-video-status', data.error || 'Failed to start video editing', 'error');
@@ -507,15 +485,13 @@ async function pollVideoStatus(operationName, section) {
                 clearInterval(pollInterval);
                 showStatus(`${section}-status`, data.error || 'Video generation failed', 'error');
             }
-            // Continue polling if still processing
         } catch (error) {
             clearInterval(pollInterval);
             showStatus(`${section}-status`, 'Network error during polling', 'error');
         }
-    }, 10000); // Poll every 10 seconds
+    }, 10000);
 }
 
-// Utility functions
 function showStatus(elementId, message, type) {
     const element = document.getElementById(elementId);
     element.textContent = message;
@@ -527,7 +503,6 @@ function fileToBase64(file) {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => {
-            // Remove the data:image/jpeg;base64, prefix
             const base64 = reader.result.split(',')[1];
             resolve(base64);
         };
@@ -551,7 +526,6 @@ function downloadVideo(videoId) {
     link.click();
 }
 
-// Check API health on load
 async function checkHealth() {
     try {
         const response = await fetch('/health');
@@ -562,8 +536,7 @@ async function checkHealth() {
     }
 }
 
-// Initialize
 document.addEventListener('DOMContentLoaded', function() {
     checkHealth();
-    updateAuthUI(); // This will handle showing the correct section based on auth status
+    updateAuthUI();
 });
