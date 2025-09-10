@@ -161,6 +161,102 @@ pub fn openapi_spec() -> serde_json::Value {
                     }
                 }
             },
+            "/register": {
+                "post": {
+                    "summary": "Register New User",
+                    "description": "Creates a new user account and returns an API key",
+                    "operationId": "registerUser",
+                    "tags": ["Authentication"],
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RegisterRequest"
+                                },
+                                "example": {
+                                    "email": "user@example.com",
+                                    "password": "securepassword123"
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "User registered successfully",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/AuthResponse"
+                                    },
+                                    "example": {
+                                        "success": true,
+                                        "api_key": "gp_1234567890_abcdef"
+                                    }
+                                }
+                            }
+                        },
+                        "400": {
+                            "description": "Invalid request or user already exists",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ErrorResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/login": {
+                "post": {
+                    "summary": "User Login",
+                    "description": "Authenticates a user and returns their API key",
+                    "operationId": "loginUser",
+                    "tags": ["Authentication"],
+                    "requestBody": {
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginRequest"
+                                },
+                                "example": {
+                                    "email": "user@example.com",
+                                    "password": "securepassword123"
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "Login successful",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/AuthResponse"
+                                    },
+                                    "example": {
+                                        "success": true,
+                                        "api_key": "gp_1234567890_abcdef"
+                                    }
+                                }
+                            }
+                        },
+                        "401": {
+                            "description": "Invalid credentials",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ErrorResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "/edit": {
                 "post": {
                     "summary": "Edit Image with Text Prompt",
@@ -351,10 +447,68 @@ pub fn openapi_spec() -> serde_json::Value {
                             "description": "Error message describing what went wrong"
                         }
                     }
+                },
+                "RegisterRequest": {
+                    "type": "object",
+                    "required": ["email", "password"],
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "format": "email",
+                            "description": "User's email address",
+                            "example": "user@example.com"
+                        },
+                        "password": {
+                            "type": "string",
+                            "description": "User's password",
+                            "minLength": 6,
+                            "example": "securepassword123"
+                        }
+                    }
+                },
+                "LoginRequest": {
+                    "type": "object",
+                    "required": ["email", "password"],
+                    "properties": {
+                        "email": {
+                            "type": "string",
+                            "format": "email",
+                            "description": "User's email address",
+                            "example": "user@example.com"
+                        },
+                        "password": {
+                            "type": "string",
+                            "description": "User's password",
+                            "example": "securepassword123"
+                        }
+                    }
+                },
+                "AuthResponse": {
+                    "type": "object",
+                    "required": ["success"],
+                    "properties": {
+                        "success": {
+                            "type": "boolean",
+                            "description": "Whether the authentication was successful"
+                        },
+                        "api_key": {
+                            "type": "string",
+                            "description": "API key for authenticated requests",
+                            "example": "gp_1234567890_abcdef"
+                        },
+                        "error": {
+                            "type": "string",
+                            "description": "Error message if authentication failed"
+                        }
+                    }
                 }
             }
         },
         "tags": [
+            {
+                "name": "Authentication",
+                "description": "User authentication and registration endpoints"
+            },
             {
                 "name": "System",
                 "description": "System and health endpoints"
