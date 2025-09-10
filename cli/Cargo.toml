@@ -1,0 +1,23 @@
+[package]
+name = "geminipocket"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "geminipocket-cli"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "env"] }
+tokio = { version = "1.40", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "multipart"] }
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+colored = "2.1"
+indicatif = "0.17"
+dirs = "5.0"
+toml = "0.8"
+anyhow.workspace = true
+image = "0.25"
+chrono = "0.4"
