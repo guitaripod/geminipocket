@@ -1,4 +1,7 @@
 /target
+**/target/
+cli/target/
+backend/worker/target/
 **/*.rs.bk
 Cargo.lock
 .env
