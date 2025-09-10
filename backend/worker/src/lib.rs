@@ -20,6 +20,7 @@ struct EditRequest {
     image: String,
     prompt: String,
     #[serde(default)]
+    #[allow(dead_code)]
     mime_type: String,
 }
 
@@ -59,6 +60,7 @@ struct VideoStatusResponse {
     #[serde(default)]
     done: bool,
     response: Option<VideoGenerationResponse>,
+    #[allow(dead_code)]
     name: Option<String>,
 }
 
@@ -91,6 +93,7 @@ struct GeminiError {
 struct GeminiErrorDetails {
     code: u16,
     message: String,
+    #[allow(dead_code)]
     status: String,
 }
 
@@ -103,6 +106,7 @@ struct GeminiResponse {
 struct GeminiCandidate {
     content: Option<GeminiContent>,
     #[serde(rename = "finishReason")]
+    #[allow(dead_code)]
     finish_reason: Option<String>,
 }
 
@@ -115,6 +119,7 @@ struct GeminiContent {
 #[serde(untagged)]
 enum GeminiPart {
     Text {
+        #[allow(dead_code)]
         text: String,
     },
     Image {
@@ -126,6 +131,7 @@ enum GeminiPart {
 #[derive(Debug, Deserialize)]
 struct InlineData {
     #[serde(rename = "mimeType")]
+    #[allow(dead_code)]
     mime_type: String,
     data: String,
 }
@@ -151,6 +157,7 @@ struct AuthResponse {
 }
 
 #[derive(Serialize)]
+#[allow(dead_code)]
 struct User {
     id: String,
     email: String,
