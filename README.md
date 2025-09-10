@@ -11,6 +11,9 @@ AI image and video generation and editing powered by Google Gemini and Veo.
 # Install CLI
 cargo install --path cli
 
+# Authenticate (required for API access)
+geminipocket-cli auth register  # or 'geminipocket-cli auth login' if you have an account
+
 # Generate an image
 geminipocket-cli generate "a sunset over mountains"
 
@@ -72,11 +75,20 @@ geminipocket/
 # Show all commands
 geminipocket-cli --help
 
+# Authentication
+geminipocket-cli auth register    # Create new account
+geminipocket-cli auth login       # Login to existing account
+geminipocket-cli auth logout      # Logout and clear credentials
+geminipocket-cli auth status      # Check authentication status
+
 # Generate with custom filename
 geminipocket-cli generate "abstract art" --name my-art
 
-# Configure output directory
+# Configure settings
 geminipocket-cli config set output_dir ~/Pictures/AI
+geminipocket-cli config set api_url https://your-api-endpoint.com
+geminipocket-cli config get output_dir
+geminipocket-cli config list
 
 # Check API status
 geminipocket-cli health
@@ -104,14 +116,23 @@ geminipocket-cli health
 # Run worker locally
 cd backend && wrangler dev
 
+# Build backend
+cd backend/worker && cargo build --release
+
 # Build and deploy worker (from root)
 ./build_deploy.sh
 ```
 
 ### CLI
 ```bash
-# Build CLI
-cargo build --release -p geminipocket
+# Build all components
+cargo build --workspace
+
+# Build release version
+cargo build --workspace --release
+
+# Build CLI only
+cargo build -p geminipocket
 
 # Install CLI globally
 cargo install --path cli
