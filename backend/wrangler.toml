@@ -1,0 +1,14 @@
+name = "geminipocket"
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-12-01"
+
+[build]
+command = "./build.sh"
+
+[vars]
+
+[env.production]
+name = "geminipocket-production"
+
+[env.staging]
+name = "geminipocket-staging"
