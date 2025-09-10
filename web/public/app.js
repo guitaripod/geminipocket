@@ -38,6 +38,12 @@ document.getElementById('generate-prompt').addEventListener('input', function() 
     document.getElementById('char-count').textContent = count;
 });
 
+// Character count for video generate prompt
+document.getElementById('generate-video-prompt').addEventListener('input', function() {
+    const count = this.value.length;
+    document.getElementById('video-char-count').textContent = count;
+});
+
 // Set prompt from examples
 function setPrompt(text) {
     document.getElementById('generate-prompt').value = text;
@@ -47,6 +53,17 @@ function setPrompt(text) {
 // Set edit prompt from examples
 function setEditPrompt(text) {
     document.getElementById('edit-prompt').value = text;
+}
+
+// Set video prompt from examples
+function setVideoPrompt(text) {
+    document.getElementById('generate-video-prompt').value = text;
+    document.getElementById('generate-video-prompt').dispatchEvent(new Event('input'));
+}
+
+// Set edit video prompt from examples
+function setEditVideoPrompt(text) {
+    document.getElementById('edit-video-prompt').value = text;
 }
 
 // File handling for edit section
@@ -80,6 +97,40 @@ dropZone.addEventListener('drop', (e) => {
     if (files.length > 0) {
         document.getElementById('edit-file').files = files;
         handleFileSelect({ target: { files: files } });
+    }
+});
+
+// File handling for video edit section
+function handleVideoFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('edit-video-preview').src = e.target.result;
+            document.getElementById('edit-video-preview').style.display = 'block';
+            document.getElementById('original-video-image').src = e.target.result;
+            document.getElementById('edit-video-btn').disabled = false;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Drag and drop for video file upload
+const videoDropZone = document.getElementById('video-file-drop-zone');
+videoDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    videoDropZone.classList.add('dragover');
+});
+videoDropZone.addEventListener('dragleave', () => {
+    videoDropZone.classList.remove('dragover');
+});
+videoDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    videoDropZone.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        document.getElementById('edit-video-file').files = files;
+        handleVideoFileSelect({ target: { files: files } });
     }
 });
 
@@ -300,6 +351,170 @@ async function editImage() {
     }
 }
 
+// Video generation functions
+async function generateVideo() {
+    const prompt = document.getElementById('generate-video-prompt').value.trim();
+    const negativePrompt = document.getElementById('generate-video-negative').value.trim();
+    const aspectRatio = document.getElementById('video-aspect-ratio').value;
+    const resolution = document.getElementById('video-resolution').value;
+
+    if (!prompt) {
+        showStatus('generate-video-status', 'Please enter a prompt', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('generate-video-btn');
+    const loading = document.getElementById('generate-video-loading');
+    btn.disabled = true;
+    loading.style.display = 'inline-block';
+
+    if (!currentApiKey) {
+        showStatus('generate-video-status', 'Please login first', 'error');
+        showSection('auth');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate_video', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentApiKey}`,
+            },
+            body: JSON.stringify({
+                prompt,
+                negative_prompt: negativePrompt || undefined,
+                aspect_ratio: aspectRatio,
+                resolution: resolution
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Start polling for completion
+            pollVideoStatus(data.operation_name, 'generate-video');
+        } else {
+            showStatus('generate-video-status', data.error || 'Failed to start video generation', 'error');
+        }
+    } catch (error) {
+        showStatus('generate-video-status', 'Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+}
+
+async function editVideo() {
+    const fileInput = document.getElementById('edit-video-file');
+    const prompt = document.getElementById('edit-video-prompt').value.trim();
+    const negativePrompt = document.getElementById('edit-video-negative').value.trim();
+    const aspectRatio = document.getElementById('edit-video-aspect-ratio').value;
+    const resolution = document.getElementById('edit-video-resolution').value;
+
+    if (!fileInput.files[0]) {
+        showStatus('edit-video-status', 'Please select an image', 'error');
+        return;
+    }
+
+    if (!prompt) {
+        showStatus('edit-video-status', 'Please enter an edit prompt', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('edit-video-btn');
+    const loading = document.getElementById('edit-video-loading');
+    btn.disabled = true;
+    loading.style.display = 'inline-block';
+
+    if (!currentApiKey) {
+        showStatus('edit-video-status', 'Please login first', 'error');
+        showSection('auth');
+        return;
+    }
+
+    try {
+        // Convert file to base64
+        const file = fileInput.files[0];
+        const base64 = await fileToBase64(file);
+
+        const response = await fetch('/edit_video', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentApiKey}`,
+            },
+            body: JSON.stringify({
+                prompt,
+                image: base64,
+                mime_type: file.type || 'image/jpeg',
+                negative_prompt: negativePrompt || undefined,
+                aspect_ratio: aspectRatio,
+                resolution: resolution
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Start polling for completion
+            pollVideoStatus(data.operation_name, 'edit-video');
+        } else {
+            showStatus('edit-video-status', data.error || 'Failed to start video editing', 'error');
+        }
+    } catch (error) {
+        showStatus('edit-video-status', 'Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+}
+
+async function pollVideoStatus(operationName, section) {
+    const resultContainer = document.getElementById(`${section}-result`);
+    const videoElement = document.getElementById(section === 'generate-video' ? 'generated-video' : 'edited-video');
+    const downloadBtn = document.getElementById(section === 'generate-video' ? 'download-generate-video-btn' : 'download-edit-video-btn');
+
+    showStatus(`${section}-status`, 'Video generation in progress...', 'info');
+
+    const pollInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/video_status/${operationName}`, {
+                headers: {
+                    'Authorization': `Bearer ${currentApiKey}`,
+                },
+            });
+            const data = await response.json();
+
+            if (data.success && data.done) {
+                clearInterval(pollInterval);
+
+                if (data.video_uri) {
+                    videoElement.src = data.video_uri;
+                    videoElement.style.display = 'block';
+                    resultContainer.style.display = 'block';
+                    downloadBtn.style.display = 'inline-block';
+
+                    if (section === 'edit-video') {
+                        document.getElementById('video-comparison-container').style.display = 'flex';
+                    }
+
+                    showStatus(`${section}-status`, 'Video generated successfully!', 'success');
+                } else {
+                    showStatus(`${section}-status`, 'Video generation completed but no download available', 'error');
+                }
+            } else if (!data.success) {
+                clearInterval(pollInterval);
+                showStatus(`${section}-status`, data.error || 'Video generation failed', 'error');
+            }
+            // Continue polling if still processing
+        } catch (error) {
+            clearInterval(pollInterval);
+            showStatus(`${section}-status`, 'Network error during polling', 'error');
+        }
+    }, 10000); // Poll every 10 seconds
+}
+
 // Utility functions
 function showStatus(elementId, message, type) {
     const element = document.getElementById(elementId);
@@ -325,6 +540,14 @@ function downloadImage(imageId) {
     const link = document.createElement('a');
     link.href = img.src;
     link.download = `gemini-image-${Date.now()}.png`;
+    link.click();
+}
+
+function downloadVideo(videoId) {
+    const video = document.getElementById(videoId);
+    const link = document.createElement('a');
+    link.href = video.src;
+    link.download = `gemini-video-${Date.now()}.mp4`;
     link.click();
 }
 

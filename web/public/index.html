@@ -16,6 +16,8 @@
         <nav class="nav" id="main-nav" style="display: none;">
             <button class="nav-btn active" onclick="showSection('generate', this)">Generate Image</button>
             <button class="nav-btn" onclick="showSection('edit', this)">Edit Image</button>
+            <button class="nav-btn" onclick="showSection('generate_video', this)">Generate Video</button>
+            <button class="nav-btn" onclick="showSection('edit_video', this)">Edit Video</button>
             <button class="nav-btn" onclick="showSection('docs', this)">API Docs</button>
         </nav>
 
@@ -175,6 +177,160 @@
             </div>
         </section>
 
+        <!-- Generate Video Section -->
+        <section id="generate_video" class="section">
+            <h2>Generate Video from Text</h2>
+
+            <div class="form-group">
+                <label for="generate-video-prompt">Describe the video you want to create:</label>
+                <textarea
+                    id="generate-video-prompt"
+                    rows="4"
+                    placeholder="Drone shot following a classic red convertible along a winding coastal road at sunset, waves crashing against the rocks below. The convertible accelerates fast and the engine roars loudly."
+                    maxlength="10000"
+                ></textarea>
+                <div class="char-count">
+                    <span id="video-char-count">0</span>/10000 characters
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="video-aspect-ratio">Aspect Ratio:</label>
+                    <select id="video-aspect-ratio">
+                        <option value="16:9">16:9 (Landscape)</option>
+                        <option value="9:16">9:16 (Portrait)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="video-resolution">Resolution:</label>
+                    <select id="video-resolution">
+                        <option value="720p">720p</option>
+                        <option value="1080p">1080p</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="generate-video-negative">Negative Prompt (optional):</label>
+                <input
+                    type="text"
+                    id="generate-video-negative"
+                    placeholder="cartoon, drawing, low quality"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Quick Video Examples:</label>
+                <div class="examples">
+                    <span class="example-tag" onclick="setVideoPrompt('Drone shot following a classic red convertible along a winding coastal road at sunset')">Coastal Drive</span>
+                    <span class="example-tag" onclick="setVideoPrompt('A cinematic shot of a majestic lion walking through the savannah at golden hour')">Majestic Lion</span>
+                    <span class="example-tag" onclick="setVideoPrompt('Time-lapse of a bustling cityscape from dawn to dusk')">City Timelapse</span>
+                    <span class="example-tag" onclick="setVideoPrompt('Close-up of a butterfly emerging from its chrysalis')">Butterfly Emergence</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateVideo()" id="generate-video-btn">
+                <span class="loading" id="generate-video-loading"></span>
+                Generate Video
+            </button>
+
+            <div id="generate-video-result" class="result-container">
+                <div id="generate-video-status"></div>
+                <video id="generated-video" class="result-video" controls></video>
+                <button class="btn btn-secondary" onclick="downloadVideo('generated-video')" id="download-generate-video-btn">
+                    Download Video
+                </button>
+            </div>
+        </section>
+
+        <!-- Edit Video Section -->
+        <section id="edit_video" class="section">
+            <h2>Edit Image into Video</h2>
+
+            <div class="form-group">
+                <label>Upload an image to animate:</label>
+                <div class="file-input-container" id="video-file-drop-zone">
+                    <input type="file" id="edit-video-file" class="file-input" accept="image/*" onchange="handleVideoFileSelect(event)" />
+                    <div class="file-input-label">
+                        <div>📁</div>
+                        <div>Click to select or drag and drop an image</div>
+                        <div>PNG, JPG, GIF, WebP supported</div>
+                    </div>
+                </div>
+                <img id="edit-video-preview" class="image-preview" />
+            </div>
+
+            <div class="form-group">
+                <label for="edit-video-prompt">Describe how to animate the image:</label>
+                <textarea
+                    id="edit-video-prompt"
+                    rows="3"
+                    placeholder="Make the subject dance gracefully, add flowing movements, create a dynamic scene..."
+                ></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="edit-video-aspect-ratio">Aspect Ratio:</label>
+                    <select id="edit-video-aspect-ratio">
+                        <option value="16:9">16:9 (Landscape)</option>
+                        <option value="9:16">9:16 (Portrait)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-video-resolution">Resolution:</label>
+                    <select id="edit-video-resolution">
+                        <option value="720p">720p</option>
+                        <option value="1080p">1080p</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-video-negative">Negative Prompt (optional):</label>
+                <input
+                    type="text"
+                    id="edit-video-negative"
+                    placeholder="cartoon, drawing, low quality"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Quick Edit Examples:</label>
+                <div class="examples">
+                    <span class="example-tag" onclick="setEditVideoPrompt('Make the subject dance and spin gracefully')">Dance & Spin</span>
+                    <span class="example-tag" onclick="setEditVideoPrompt('Add flowing water effects around the image')">Flowing Water</span>
+                    <span class="example-tag" onclick="setEditVideoPrompt('Create a zoom-in effect with camera movement')">Zoom Effect</span>
+                    <span class="example-tag" onclick="setEditVideoPrompt('Add particle effects and magical sparkles')">Magical Effects</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="editVideo()" id="edit-video-btn" disabled>
+                <span class="loading" id="edit-video-loading"></span>
+                Edit into Video
+            </button>
+
+            <div id="edit-video-result" class="result-container">
+                <div id="edit-video-status"></div>
+                <div class="comparison-container" id="video-comparison-container">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Original</div>
+                        <img id="original-video-image" class="result-image" />
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Video</div>
+                        <video id="edited-video" class="result-video" controls></video>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="downloadVideo('edited-video')" id="download-edit-video-btn">
+                    Download Video
+                </button>
+            </div>
+        </section>
+
         <!-- Docs Section -->
         <section id="docs" class="section">
             <h2>API Documentation</h2>
@@ -188,11 +344,29 @@
                     <code>{"prompt": "A beautiful landscape"}</code>
                 </div>
 
-                <div class="endpoint">
-                    <h4>POST /edit</h4>
-                    <p>Edit an existing image with a text prompt</p>
-                    <code>{"prompt": "Add flowers", "image": "base64...", "mime_type": "image/png"}</code>
-                </div>
+                 <div class="endpoint">
+                     <h4>POST /edit</h4>
+                     <p>Edit an existing image with a text prompt</p>
+                     <code>{"prompt": "Add flowers", "image": "base64...", "mime_type": "image/png"}</code>
+                 </div>
+
+                 <div class="endpoint">
+                     <h4>POST /generate_video</h4>
+                     <p>Generate a video from a text prompt</p>
+                     <code>{"prompt": "Drone shot of a car", "aspect_ratio": "16:9", "resolution": "720p"}</code>
+                 </div>
+
+                 <div class="endpoint">
+                     <h4>POST /edit_video</h4>
+                     <p>Transform an image into a video</p>
+                     <code>{"prompt": "Make it dance", "image": "base64...", "mime_type": "image/png"}</code>
+                 </div>
+
+                 <div class="endpoint">
+                     <h4>GET /video_status/:operation</h4>
+                     <p>Check video generation status</p>
+                     <p>Poll this endpoint to check if video is ready for download</p>
+                 </div>
 
                 <div class="endpoint">
                     <h4>GET /health</h4>
