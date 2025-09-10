@@ -155,7 +155,19 @@ async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get("/", |_, _| {
             let mut headers = cors_headers();
             headers.set("Content-Type", "text/html").unwrap();
-            Response::ok(swagger_ui_html())
+            Response::ok(include_str!("../../../web/public/index.html"))
+                .map(|r| r.with_headers(headers))
+        })
+        .get("/styles.css", |_, _| {
+            let mut headers = cors_headers();
+            headers.set("Content-Type", "text/css").unwrap();
+            Response::ok(include_str!("../../../web/public/styles.css"))
+                .map(|r| r.with_headers(headers))
+        })
+        .get("/app.js", |_, _| {
+            let mut headers = cors_headers();
+            headers.set("Content-Type", "application/javascript").unwrap();
+            Response::ok(include_str!("../../../web/public/app.js"))
                 .map(|r| r.with_headers(headers))
         })
         .get("/health", |_, _| {
