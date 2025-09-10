@@ -1,6 +1,6 @@
 # GeminiPocket
 
-AI image generation and editing powered by Google Gemini.
+AI image and video generation and editing powered by Google Gemini and Veo.
 
 ## 🚀 Quick Start
 
@@ -22,8 +22,10 @@ geminipocket-cli edit photo.png "add a rainbow"
 
 ## ✨ Features
 
-- **Generate** - Create images from text prompts
-- **Edit** - Transform existing images with AI
+- **Generate Images** - Create images from text prompts
+- **Edit Images** - Transform existing images with AI
+- **Generate Videos** - Create videos from text prompts
+- **Edit Videos** - Transform images into videos with AI
 - **Web Interface** - User-friendly web app with drag-and-drop
 - **Fast** - Powered by Cloudflare Workers edge network
 - **Simple** - Clean CLI with sensible defaults
@@ -53,6 +55,8 @@ geminipocket/
 ### Features:
 - Generate images from text prompts
 - Edit existing images with drag-and-drop
+- Generate videos from text prompts
+- Edit videos from images with AI
 - Responsive design with dark mode support
 - Real-time API health monitoring
 - Direct access to API documentation

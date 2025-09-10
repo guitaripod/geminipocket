@@ -61,106 +61,182 @@ pub fn openapi_spec() -> serde_json::Value {
                                     "schema": {
                                         "$ref": "#/components/schemas/HealthStatus"
                                     },
-                                    "example": {
-                                        "status": "healthy",
-                                        "timestamp": 1704067200
-                                    }
+                                     "example": {
+                                         "status": "healthy"
+                                     }
                                 }
                             }
                         }
                     }
                 }
             },
-            "/openapi": {
-                "get": {
-                    "summary": "OpenAPI Specification",
-                    "description": "Returns the OpenAPI specification for this API",
-                    "operationId": "getOpenApiSpec",
-                    "tags": ["System"],
-                    "responses": {
-                        "200": {
-                            "description": "OpenAPI specification retrieved successfully",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "type": "object",
-                                        "description": "OpenAPI 3.1.0 specification document"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "/generate": {
-                "post": {
-                    "summary": "Generate Image from Text",
-                    "description": "Generates a new image based on a text prompt using Google's Gemini API",
-                    "operationId": "generateImage",
-                    "tags": ["Image Generation"],
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenerateImageRequest"
-                                },
-                                "examples": {
-                                    "simple": {
-                                        "summary": "Simple generation request",
-                                        "value": {
-                                            "prompt": "A sunset over mountains with a lake in the foreground"
-                                        }
-                                    },
-                                    "detailed": {
-                                        "summary": "Detailed generation request",
-                                        "value": {
-                                            "prompt": "A futuristic robot standing in a modern office, photorealistic, 4k quality, dramatic lighting"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Image generated successfully",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ImageResponse"
-                                    },
-                                    "example": {
-                                        "success": true,
-                                        "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-                                        "mime_type": "image/png"
-                                    }
-                                }
-                            }
-                        },
-                        "400": {
-                            "description": "Invalid request body",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ErrorResponse"
-                                    }
-                                }
-                            }
-                        },
-                        "500": {
-                            "description": "Internal server error or Gemini API error",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ErrorResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+             "/openapi": {
+                 "get": {
+                     "summary": "OpenAPI Specification",
+                     "description": "Returns the OpenAPI specification for this API",
+                     "operationId": "getOpenApiSpec",
+                     "tags": ["System"],
+                     "responses": {
+                         "200": {
+                             "description": "OpenAPI specification retrieved successfully",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "type": "object",
+                                         "description": "OpenAPI 3.1.0 specification document"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/docs": {
+                 "get": {
+                     "summary": "API Documentation",
+                     "description": "Returns the Swagger UI for interactive API documentation",
+                     "operationId": "getApiDocs",
+                     "tags": ["System"],
+                     "responses": {
+                         "200": {
+                             "description": "Swagger UI documentation page",
+                             "content": {
+                                 "text/html": {
+                                     "schema": {
+                                         "type": "string",
+                                         "description": "HTML page with Swagger UI"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/styles.css": {
+                 "get": {
+                     "summary": "Stylesheet",
+                     "description": "Returns the CSS stylesheet for the web interface",
+                     "operationId": "getStyles",
+                     "tags": ["System"],
+                     "responses": {
+                         "200": {
+                             "description": "CSS stylesheet retrieved successfully",
+                             "content": {
+                                 "text/css": {
+                                     "schema": {
+                                         "type": "string",
+                                         "description": "CSS stylesheet content"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/app.js": {
+                 "get": {
+                     "summary": "JavaScript Application",
+                     "description": "Returns the JavaScript application code for the web interface",
+                     "operationId": "getAppJs",
+                     "tags": ["System"],
+                     "responses": {
+                         "200": {
+                             "description": "JavaScript application retrieved successfully",
+                             "content": {
+                                 "application/javascript": {
+                                     "schema": {
+                                         "type": "string",
+                                         "description": "JavaScript application code"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/generate": {
+                 "post": {
+                     "summary": "Generate Image from Text",
+                     "description": "Generates a new image based on a text prompt using Google's Gemini API",
+                     "operationId": "generateImage",
+                     "tags": ["Image Generation"],
+                     "security": [
+                         {
+                             "bearerAuth": []
+                         }
+                     ],
+                     "requestBody": {
+                         "required": true,
+                         "content": {
+                             "application/json": {
+                                 "schema": {
+                                     "$ref": "#/components/schemas/GenerateImageRequest"
+                                 },
+                                 "examples": {
+                                     "simple": {
+                                         "summary": "Simple generation request",
+                                         "value": {
+                                             "prompt": "A sunset over mountains with a lake in the foreground"
+                                         }
+                                     },
+                                     "detailed": {
+                                         "summary": "Detailed generation request",
+                                         "value": {
+                                             "prompt": "A futuristic robot standing in a modern office, photorealistic, 4k quality, dramatic lighting"
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     },
+                     "responses": {
+                         "200": {
+                             "description": "Image generated successfully",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ImageResponse"
+                                     },
+                                     "example": {
+                                         "success": true,
+                                         "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                                     }
+                                 }
+                             }
+                         },
+                         "400": {
+                             "description": "Invalid request body",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "401": {
+                             "description": "Unauthorized - Invalid or missing API key",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "500": {
+                             "description": "Internal server error or Gemini API error",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
             "/register": {
                 "post": {
                     "summary": "Register New User",
@@ -257,81 +333,362 @@ pub fn openapi_spec() -> serde_json::Value {
                     }
                 }
             },
-            "/edit": {
-                "post": {
-                    "summary": "Edit Image with Text Prompt",
-                    "description": "Edits an existing image based on a text prompt using Google's Gemini API",
-                    "operationId": "editImage",
-                    "tags": ["Image Generation"],
-                    "requestBody": {
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/EditImageRequest"
-                                },
-                                "examples": {
-                                    "transform": {
-                                        "summary": "Transform an image",
-                                        "value": {
-                                            "prompt": "Transform this blue circle into a yellow sun with rays around it",
-                                            "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-                                            "mime_type": "image/png"
-                                        }
-                                    },
-                                    "enhance": {
-                                        "summary": "Enhance an image",
-                                        "value": {
-                                            "prompt": "Add a dramatic sunset background to this landscape",
-                                            "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "Image edited successfully",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ImageResponse"
-                                    },
-                                    "example": {
-                                        "success": true,
-                                        "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-                                        "mime_type": "image/png"
-                                    }
-                                }
-                            }
-                        },
-                        "400": {
-                            "description": "Invalid request body",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ErrorResponse"
-                                    }
-                                }
-                            }
-                        },
-                        "500": {
-                            "description": "Internal server error or Gemini API error",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "$ref": "#/components/schemas/ErrorResponse"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+             "/edit": {
+                 "post": {
+                     "summary": "Edit Image with Text Prompt",
+                     "description": "Edits an existing image based on a text prompt using Google's Gemini API",
+                     "operationId": "editImage",
+                     "tags": ["Image Generation"],
+                     "security": [
+                         {
+                             "bearerAuth": []
+                         }
+                     ],
+                     "requestBody": {
+                         "required": true,
+                         "content": {
+                             "application/json": {
+                                 "schema": {
+                                     "$ref": "#/components/schemas/EditImageRequest"
+                                 },
+                                 "examples": {
+                                     "transform": {
+                                         "summary": "Transform an image",
+                                         "value": {
+                                             "prompt": "Transform this blue circle into a yellow sun with rays around it",
+                                             "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                                             "mime_type": "image/png"
+                                         }
+                                     },
+                                     "enhance": {
+                                         "summary": "Enhance an image",
+                                         "value": {
+                                             "prompt": "Add a dramatic sunset background to this landscape",
+                                             "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     },
+                     "responses": {
+                         "200": {
+                             "description": "Image edited successfully",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ImageResponse"
+                                     },
+                                     "example": {
+                                         "success": true,
+                                         "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                                     }
+                                 }
+                             }
+                         },
+                         "400": {
+                             "description": "Invalid request body",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "401": {
+                             "description": "Unauthorized - Invalid or missing API key",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "500": {
+                             "description": "Internal server error or Gemini API error",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/generate_video": {
+                 "post": {
+                     "summary": "Generate Video from Text Prompt",
+                     "description": "Generates a new video based on a text prompt using Google's Veo API",
+                     "operationId": "generateVideo",
+                     "tags": ["Video Generation"],
+                     "security": [
+                         {
+                             "bearerAuth": []
+                         }
+                     ],
+                     "requestBody": {
+                         "required": true,
+                         "content": {
+                             "application/json": {
+                                 "schema": {
+                                     "$ref": "#/components/schemas/GenerateVideoRequest"
+                                 },
+                                 "examples": {
+                                     "simple": {
+                                         "summary": "Simple video generation",
+                                         "value": {
+                                             "prompt": "A cat playing with a ball of yarn in a sunny garden"
+                                         }
+                                     },
+                                     "detailed": {
+                                         "summary": "Detailed video generation with parameters",
+                                         "value": {
+                                             "prompt": "A futuristic cityscape at sunset with flying cars",
+                                             "negative_prompt": "dark, stormy, rain",
+                                             "aspect_ratio": "16:9",
+                                             "resolution": "1280x720"
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     },
+                     "responses": {
+                         "200": {
+                             "description": "Video generation started successfully",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/VideoOperationResponse"
+                                     },
+                                     "example": {
+                                         "success": true,
+                                         "operation_name": "projects/project-id/locations/us-central1/operations/operation-id"
+                                     }
+                                 }
+                             }
+                         },
+                         "400": {
+                             "description": "Invalid request body",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "401": {
+                             "description": "Unauthorized - Invalid or missing API key",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "500": {
+                             "description": "Internal server error or Veo API error",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/edit_video": {
+                 "post": {
+                     "summary": "Edit Video with Image and Text Prompt",
+                     "description": "Edits a video based on an input image and text prompt using Google's Veo API",
+                     "operationId": "editVideo",
+                     "tags": ["Video Generation"],
+                     "security": [
+                         {
+                             "bearerAuth": []
+                         }
+                     ],
+                     "requestBody": {
+                         "required": true,
+                         "content": {
+                             "application/json": {
+                                 "schema": {
+                                     "$ref": "#/components/schemas/EditVideoRequest"
+                                 },
+                                 "examples": {
+                                     "transform": {
+                                         "summary": "Transform image into video",
+                                         "value": {
+                                             "prompt": "A butterfly emerging from a cocoon and flying away",
+                                             "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                                             "mime_type": "image/png"
+                                         }
+                                     },
+                                     "detailed": {
+                                         "summary": "Detailed video editing with parameters",
+                                         "value": {
+                                             "prompt": "A majestic eagle soaring through the clouds",
+                                             "image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                                             "mime_type": "image/jpeg",
+                                             "negative_prompt": "ground, trees, buildings",
+                                             "aspect_ratio": "9:16",
+                                             "resolution": "720x1280"
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     },
+                     "responses": {
+                         "200": {
+                             "description": "Video editing started successfully",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/VideoOperationResponse"
+                                     },
+                                     "example": {
+                                         "success": true,
+                                         "operation_name": "projects/project-id/locations/us-central1/operations/operation-id"
+                                     }
+                                 }
+                             }
+                         },
+                         "400": {
+                             "description": "Invalid request body",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "401": {
+                             "description": "Unauthorized - Invalid or missing API key",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "500": {
+                             "description": "Internal server error or Veo API error",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             },
+             "/video_status/{operation}": {
+                 "get": {
+                     "summary": "Check Video Generation Status",
+                     "description": "Checks the status of a video generation or editing operation",
+                     "operationId": "getVideoStatus",
+                     "tags": ["Video Generation"],
+                     "security": [
+                         {
+                             "bearerAuth": []
+                         }
+                     ],
+                     "parameters": [
+                         {
+                             "name": "operation",
+                             "in": "path",
+                             "required": true,
+                             "schema": {
+                                 "type": "string"
+                             },
+                             "description": "The operation name returned from video generation/editing request",
+                             "example": "projects/project-id/locations/us-central1/operations/operation-id"
+                         }
+                     ],
+                     "responses": {
+                         "200": {
+                             "description": "Video operation status retrieved successfully",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/VideoStatusResponse"
+                                     },
+                                     "examples": {
+                                         "in_progress": {
+                                             "summary": "Video generation in progress",
+                                             "value": {
+                                                 "success": true,
+                                                 "done": false
+                                             }
+                                         },
+                                         "completed": {
+                                             "summary": "Video generation completed",
+                                             "value": {
+                                                 "success": true,
+                                                 "done": true,
+                                                 "video_uri": "https://storage.googleapis.com/generated-videos/video.mp4"
+                                             }
+                                         }
+                                     }
+                                 }
+                             }
+                         },
+                         "401": {
+                             "description": "Unauthorized - Invalid or missing API key",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "404": {
+                             "description": "Operation not found",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         },
+                         "500": {
+                             "description": "Internal server error",
+                             "content": {
+                                 "application/json": {
+                                     "schema": {
+                                         "$ref": "#/components/schemas/ErrorResponse"
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             }
         },
-        "components": {
-            "schemas": {
+         "components": {
+             "securitySchemes": {
+                 "bearerAuth": {
+                     "type": "http",
+                     "scheme": "bearer",
+                     "description": "API key obtained from user registration or login"
+                 }
+             },
+             "schemas": {
                 "ApiInfo": {
                     "type": "object",
                     "required": ["name", "version", "endpoints"],
@@ -344,41 +701,49 @@ pub fn openapi_spec() -> serde_json::Value {
                             "type": "string",
                             "description": "Version of the API"
                         },
-                        "endpoints": {
-                            "type": "object",
-                            "description": "Available endpoints",
-                            "properties": {
-                                "generate": {
-                                    "type": "string",
-                                    "description": "Text-to-image generation endpoint"
-                                },
-                                "edit": {
-                                    "type": "string",
-                                    "description": "Image editing endpoint"
-                                },
-                                "health": {
-                                    "type": "string",
-                                    "description": "Health check endpoint"
-                                }
-                            }
-                        }
+                         "endpoints": {
+                             "type": "object",
+                             "description": "Available endpoints",
+                             "properties": {
+                                 "generate": {
+                                     "type": "string",
+                                     "description": "Text-to-image generation endpoint"
+                                 },
+                                 "edit": {
+                                     "type": "string",
+                                     "description": "Image editing endpoint"
+                                 },
+                                 "generate_video": {
+                                     "type": "string",
+                                     "description": "Text-to-video generation endpoint"
+                                 },
+                                 "edit_video": {
+                                     "type": "string",
+                                     "description": "Video editing with image input endpoint"
+                                 },
+                                 "video_status": {
+                                     "type": "string",
+                                     "description": "Video generation status check endpoint"
+                                 },
+                                 "health": {
+                                     "type": "string",
+                                     "description": "Health check endpoint"
+                                 }
+                             }
+                         }
                     }
                 },
-                "HealthStatus": {
-                    "type": "object",
-                    "required": ["status", "timestamp"],
-                    "properties": {
-                        "status": {
-                            "type": "string",
-                            "enum": ["healthy", "unhealthy"],
-                            "description": "Health status of the service"
-                        },
-                        "timestamp": {
-                            "type": "number",
-                            "description": "Unix timestamp in milliseconds"
-                        }
-                    }
-                },
+                 "HealthStatus": {
+                     "type": "object",
+                     "required": ["status"],
+                     "properties": {
+                         "status": {
+                             "type": "string",
+                             "enum": ["healthy", "unhealthy"],
+                             "description": "Health status of the service"
+                         }
+                     }
+                 },
                 "GenerateImageRequest": {
                     "type": "object",
                     "required": ["prompt"],
@@ -418,26 +783,21 @@ pub fn openapi_spec() -> serde_json::Value {
                         }
                     }
                 },
-                "ImageResponse": {
-                    "type": "object",
-                    "required": ["success", "image", "mime_type"],
-                    "properties": {
-                        "success": {
-                            "type": "boolean",
-                            "description": "Whether the operation was successful"
-                        },
-                        "image": {
-                            "type": "string",
-                            "description": "Base64-encoded generated or edited image",
-                            "format": "byte"
-                        },
-                        "mime_type": {
-                            "type": "string",
-                            "description": "MIME type of the returned image",
-                            "example": "image/png"
-                        }
-                    }
-                },
+                 "ImageResponse": {
+                     "type": "object",
+                     "required": ["success", "image"],
+                     "properties": {
+                         "success": {
+                             "type": "boolean",
+                             "description": "Whether the operation was successful"
+                         },
+                         "image": {
+                             "type": "string",
+                             "description": "Base64-encoded generated or edited image",
+                             "format": "byte"
+                         }
+                     }
+                 },
                 "ErrorResponse": {
                     "type": "object",
                     "required": ["error"],
@@ -483,40 +843,159 @@ pub fn openapi_spec() -> serde_json::Value {
                         }
                     }
                 },
-                "AuthResponse": {
-                    "type": "object",
-                    "required": ["success"],
-                    "properties": {
-                        "success": {
-                            "type": "boolean",
-                            "description": "Whether the authentication was successful"
-                        },
-                        "api_key": {
-                            "type": "string",
-                            "description": "API key for authenticated requests",
-                            "example": "gp_1234567890_abcdef"
-                        },
-                        "error": {
-                            "type": "string",
-                            "description": "Error message if authentication failed"
-                        }
-                    }
-                }
+                 "AuthResponse": {
+                     "type": "object",
+                     "required": ["success"],
+                     "properties": {
+                         "success": {
+                             "type": "boolean",
+                             "description": "Whether the authentication was successful"
+                         },
+                         "api_key": {
+                             "type": "string",
+                             "description": "API key for authenticated requests",
+                             "example": "gp_1234567890_abcdef"
+                         },
+                         "error": {
+                             "type": "string",
+                             "description": "Error message if authentication failed"
+                         }
+                     }
+                 },
+                 "GenerateVideoRequest": {
+                     "type": "object",
+                     "required": ["prompt"],
+                     "properties": {
+                         "prompt": {
+                             "type": "string",
+                             "description": "Text prompt describing the video to generate",
+                             "minLength": 1,
+                             "maxLength": 10000,
+                             "example": "A cat playing with a ball of yarn in a sunny garden"
+                         },
+                         "negative_prompt": {
+                             "type": "string",
+                             "description": "Text prompt describing what to avoid in the video",
+                             "example": "dark, stormy, rain"
+                         },
+                         "aspect_ratio": {
+                             "type": "string",
+                             "description": "Aspect ratio of the generated video",
+                             "enum": ["16:9", "9:16", "1:1"],
+                             "example": "16:9"
+                         },
+                         "resolution": {
+                             "type": "string",
+                             "description": "Resolution of the generated video",
+                             "enum": ["1280x720", "720x1280", "1024x1024"],
+                             "example": "1280x720"
+                         }
+                     }
+                 },
+                 "EditVideoRequest": {
+                     "type": "object",
+                     "required": ["prompt", "image", "mime_type"],
+                     "properties": {
+                         "prompt": {
+                             "type": "string",
+                             "description": "Text prompt describing how to edit the video",
+                             "minLength": 1,
+                             "maxLength": 10000,
+                             "example": "A butterfly emerging from a cocoon and flying away"
+                         },
+                         "image": {
+                             "type": "string",
+                             "description": "Base64-encoded image data to use as input for video editing",
+                             "format": "byte",
+                             "example": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                         },
+                         "mime_type": {
+                             "type": "string",
+                             "description": "MIME type of the input image",
+                             "enum": ["image/jpeg", "image/png", "image/gif", "image/webp"],
+                             "example": "image/png"
+                         },
+                         "negative_prompt": {
+                             "type": "string",
+                             "description": "Text prompt describing what to avoid in the video",
+                             "example": "ground, trees, buildings"
+                         },
+                         "aspect_ratio": {
+                             "type": "string",
+                             "description": "Aspect ratio of the generated video",
+                             "enum": ["16:9", "9:16", "1:1"],
+                             "example": "9:16"
+                         },
+                         "resolution": {
+                             "type": "string",
+                             "description": "Resolution of the generated video",
+                             "enum": ["1280x720", "720x1280", "1024x1024"],
+                             "example": "720x1280"
+                         }
+                     }
+                 },
+                 "VideoOperationResponse": {
+                     "type": "object",
+                     "required": ["success"],
+                     "properties": {
+                         "success": {
+                             "type": "boolean",
+                             "description": "Whether the video operation was started successfully"
+                         },
+                         "operation_name": {
+                             "type": "string",
+                             "description": "The operation name to use for checking status",
+                             "example": "projects/project-id/locations/us-central1/operations/operation-id"
+                         },
+                         "error": {
+                             "type": "string",
+                             "description": "Error message if the operation failed to start"
+                         }
+                     }
+                 },
+                 "VideoStatusResponse": {
+                     "type": "object",
+                     "required": ["success", "done"],
+                     "properties": {
+                         "success": {
+                             "type": "boolean",
+                             "description": "Whether the status check was successful"
+                         },
+                         "done": {
+                             "type": "boolean",
+                             "description": "Whether the video generation is complete"
+                         },
+                         "video_uri": {
+                             "type": "string",
+                             "description": "URI of the generated video (only present when done is true)",
+                             "format": "uri",
+                             "example": "https://storage.googleapis.com/generated-videos/video.mp4"
+                         },
+                         "error": {
+                             "type": "string",
+                             "description": "Error message if the operation failed"
+                         }
+                     }
+                 }
             }
         },
-        "tags": [
-            {
-                "name": "Authentication",
-                "description": "User authentication and registration endpoints"
-            },
-            {
-                "name": "System",
-                "description": "System and health endpoints"
-            },
-            {
-                "name": "Image Generation",
-                "description": "Endpoints for generating and editing images using Gemini AI"
-            }
-        ]
+         "tags": [
+             {
+                 "name": "Authentication",
+                 "description": "User authentication and registration endpoints"
+             },
+             {
+                 "name": "System",
+                 "description": "System and health endpoints"
+             },
+             {
+                 "name": "Image Generation",
+                 "description": "Endpoints for generating and editing images using Gemini AI"
+             },
+             {
+                 "name": "Video Generation",
+                 "description": "Endpoints for generating and editing videos using Veo AI"
+             }
+         ]
     })
 }
