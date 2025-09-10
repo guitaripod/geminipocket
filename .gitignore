@@ -10,5 +10,7 @@ Cargo.lock
 backend/.dev.vars
 backend/.wrangler
 backend/build
+backend/wrangler_logs.txt
+backend/wrangler_tail.log
 node_modules
 dist
