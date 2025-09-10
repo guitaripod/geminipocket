@@ -1,3 +1,7 @@
+// Global state
+let currentApiKey = localStorage.getItem('apiKey');
+let currentUser = localStorage.getItem('userEmail');
+
 // Navigation
 function showSection(sectionId, buttonElement) {
     // Hide all sections
@@ -13,6 +17,19 @@ function showSection(sectionId, buttonElement) {
     if (buttonElement) {
         buttonElement.classList.add('active');
     }
+}
+
+// Authentication tab switching
+function showAuthTab(tabId, buttonElement) {
+    document.querySelectorAll('.auth-form').forEach(form => {
+        form.classList.remove('active');
+    });
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    document.getElementById(tabId + '-form').classList.add('active');
+    buttonElement.classList.add('active');
 }
 
 // Character count for generate prompt
@@ -66,6 +83,113 @@ dropZone.addEventListener('drop', (e) => {
     }
 });
 
+// Authentication functions
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    const statusElement = document.getElementById('login-status');
+    statusElement.textContent = 'Logging in...';
+    statusElement.className = 'auth-status';
+
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentApiKey = data.api_key;
+            currentUser = email;
+            localStorage.setItem('apiKey', currentApiKey);
+            localStorage.setItem('userEmail', currentUser);
+
+            updateAuthUI(); // This will show the app and switch to generate section
+            showStatus('login-status', 'Login successful!', 'success');
+        } else {
+            showStatus('login-status', data.error || 'Login failed', 'error');
+        }
+    } catch (error) {
+        showStatus('login-status', 'Network error. Please try again.', 'error');
+    }
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const confirmPassword = document.getElementById('register-confirm-password').value;
+
+    if (password !== confirmPassword) {
+        showStatus('register-status', 'Passwords do not match', 'error');
+        return;
+    }
+
+    const statusElement = document.getElementById('register-status');
+    statusElement.textContent = 'Registering...';
+    statusElement.className = 'auth-status';
+
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            currentApiKey = data.api_key;
+            currentUser = email;
+            localStorage.setItem('apiKey', currentApiKey);
+            localStorage.setItem('userEmail', currentUser);
+
+            updateAuthUI(); // This will show the app and switch to generate section
+            showStatus('register-status', 'Registration successful!', 'success');
+        } else {
+            showStatus('register-status', data.error || 'Registration failed', 'error');
+        }
+    } catch (error) {
+        showStatus('register-status', 'Network error. Please try again.', 'error');
+    }
+}
+
+function handleLogout() {
+    currentApiKey = null;
+    currentUser = null;
+    localStorage.removeItem('apiKey');
+    localStorage.removeItem('userEmail');
+    updateAuthUI(); // This will hide nav and show only auth section
+}
+
+function updateAuthUI() {
+    const userInfo = document.getElementById('user-info');
+    const logoutBtn = document.getElementById('logout-btn');
+    const nav = document.getElementById('main-nav');
+
+    if (currentUser && currentApiKey) {
+        userInfo.innerHTML = `<strong>Logged in as:</strong> ${currentUser}`;
+        logoutBtn.style.display = 'inline-block';
+        nav.style.display = 'flex'; // Show navigation
+        showSection('generate'); // Show app sections
+    } else {
+        userInfo.innerHTML = '<em>Not logged in</em>';
+        logoutBtn.style.display = 'none';
+        nav.style.display = 'none'; // Hide navigation
+        showSection('auth'); // Show only auth section
+    }
+}
+
 // API functions
 async function generateImage() {
     const prompt = document.getElementById('generate-prompt').value.trim();
@@ -79,11 +203,18 @@ async function generateImage() {
     btn.disabled = true;
     loading.style.display = 'inline-block';
 
+    if (!currentApiKey) {
+        showStatus('generate-status', 'Please login first', 'error');
+        showSection('auth');
+        return;
+    }
+
     try {
         const response = await fetch('/generate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentApiKey}`,
             },
             body: JSON.stringify({ prompt }),
         });
@@ -126,6 +257,12 @@ async function editImage() {
     btn.disabled = true;
     loading.style.display = 'inline-block';
 
+    if (!currentApiKey) {
+        showStatus('edit-status', 'Please login first', 'error');
+        showSection('auth');
+        return;
+    }
+
     try {
         // Convert file to base64
         const file = fileInput.files[0];
@@ -135,6 +272,7 @@ async function editImage() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentApiKey}`,
             },
             body: JSON.stringify({
                 prompt,
@@ -204,4 +342,5 @@ async function checkHealth() {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     checkHealth();
+    updateAuthUI(); // This will handle showing the correct section based on auth status
 });
