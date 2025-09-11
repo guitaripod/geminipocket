@@ -15,7 +15,7 @@
     "web-app"
   ],
   "author": "guitaripod",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "devDependencies": {
     "serve": "^14.2.1"
   }

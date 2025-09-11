@@ -99,4 +99,4 @@ The web app is served directly by the Cloudflare Worker backend. The static file
 
 ## License
 
-MIT License - see the main project LICENSE file for details.
+GPL V3 License - see the main project LICENSE file for details.
