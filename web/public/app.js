@@ -37,6 +37,11 @@ document.getElementById('generate-video-prompt').addEventListener('input', funct
     document.getElementById('video-char-count').textContent = count;
 });
 
+document.getElementById('test-video-prompt').addEventListener('input', function() {
+    const count = this.value.length;
+    document.getElementById('test-video-char-count').textContent = count;
+});
+
 function setPrompt(text) {
     document.getElementById('generate-prompt').value = text;
     document.getElementById('generate-prompt').dispatchEvent(new Event('input'));
@@ -49,6 +54,11 @@ function setEditPrompt(text) {
 function setVideoPrompt(text) {
     document.getElementById('generate-video-prompt').value = text;
     document.getElementById('generate-video-prompt').dispatchEvent(new Event('input'));
+}
+
+function setTestVideoPrompt(text) {
+    document.getElementById('test-video-prompt').value = text;
+    document.getElementById('test-video-prompt').dispatchEvent(new Event('input'));
 }
 
 function setEditVideoPrompt(text) {
@@ -356,7 +366,7 @@ async function generateVideo() {
     }
 
     try {
-        const response = await fetch('/generate_video', {
+        const response = await fetch('/generate_video?test_mode=false', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -379,6 +389,58 @@ async function generateVideo() {
         }
     } catch (error) {
         showStatus('generate-video-status', 'Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    }
+}
+
+async function generateTestVideo() {
+    const prompt = document.getElementById('test-video-prompt').value.trim();
+    const negativePrompt = document.getElementById('test-video-negative').value.trim();
+    const aspectRatio = document.getElementById('test-video-aspect-ratio').value;
+    const resolution = document.getElementById('test-video-resolution').value;
+
+    if (!prompt) {
+        showStatus('test-generate-video-status', 'Please enter a prompt', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('test-generate-video-btn');
+    const loading = document.getElementById('test-generate-video-loading');
+    btn.disabled = true;
+    loading.style.display = 'inline-block';
+
+    if (!currentApiKey) {
+        showStatus('test-generate-video-status', 'Please login first', 'error');
+        showSection('auth');
+        return;
+    }
+
+    try {
+        const response = await fetch('/generate_video?test_mode=true', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentApiKey}`,
+            },
+            body: JSON.stringify({
+                prompt,
+                negative_prompt: negativePrompt || undefined,
+                aspect_ratio: aspectRatio,
+                resolution: resolution
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            pollTestVideoStatus(data.operation_name, 'test-generate-video');
+        } else {
+            showStatus('test-generate-video-status', data.error || 'Failed to start test video generation', 'error');
+        }
+    } catch (error) {
+        showStatus('test-generate-video-status', 'Network error. Please try again.', 'error');
     } finally {
         btn.disabled = false;
         loading.style.display = 'none';
@@ -457,7 +519,7 @@ async function pollVideoStatus(operationName, section) {
 
     const pollInterval = setInterval(async () => {
         try {
-            const response = await fetch(`/video_status/${operationName}`, {
+            const response = await fetch(`/video_status/${operationName}?test_mode=false`, {
                 headers: {
                     'Authorization': `Bearer ${currentApiKey}`,
                 },
@@ -490,6 +552,46 @@ async function pollVideoStatus(operationName, section) {
             showStatus(`${section}-status`, 'Network error during polling', 'error');
         }
     }, 10000);
+}
+
+async function pollTestVideoStatus(operationName, section) {
+    const resultContainer = document.getElementById(`${section}-result`);
+    const videoElement = document.getElementById('test-generated-video');
+    const downloadBtn = document.getElementById('test-download-generate-video-btn');
+
+    showStatus(`${section}-status`, 'Test video generation in progress...', 'info');
+
+    const pollInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/video_status/${operationName}?test_mode=true`, {
+                headers: {
+                    'Authorization': `Bearer ${currentApiKey}`,
+                },
+            });
+            const data = await response.json();
+
+            if (data.success && data.done) {
+                clearInterval(pollInterval);
+
+                if (data.video) {
+                    videoElement.src = data.video;
+                    videoElement.style.display = 'block';
+                    resultContainer.style.display = 'block';
+                    downloadBtn.style.display = 'inline-block';
+
+                    showStatus(`${section}-status`, 'Test video generated successfully!', 'success');
+                } else {
+                    showStatus(`${section}-status`, 'Test video generation completed but no video available', 'error');
+                }
+            } else if (!data.success) {
+                clearInterval(pollInterval);
+                showStatus(`${section}-status`, data.error || 'Test video generation failed', 'error');
+            }
+        } catch (error) {
+            clearInterval(pollInterval);
+            showStatus(`${section}-status`, 'Network error during polling', 'error');
+        }
+    }, 4000); // Poll at realistic interval for test mode
 }
 
 function showStatus(elementId, message, type) {

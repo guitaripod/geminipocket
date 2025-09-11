@@ -18,6 +18,7 @@
             <button class="nav-btn" onclick="showSection('edit', this)">Edit Image</button>
             <button class="nav-btn" onclick="showSection('generate_video', this)">Generate Video</button>
             <button class="nav-btn" onclick="showSection('edit_video', this)">Edit Video</button>
+            <button class="nav-btn" onclick="showSection('test_video', this)">Test Video Gen</button>
             <button class="nav-btn" onclick="showSection('docs', this)">API Docs</button>
         </nav>
 
@@ -319,6 +320,74 @@
                 </div>
                 <button class="btn btn-secondary" onclick="downloadVideo('edited-video')" id="download-edit-video-btn">
                     Download Video
+                </button>
+            </div>
+        </section>
+
+        <section id="test_video" class="section">
+            <h2>Test Video Generation (Mock Mode)</h2>
+            <p class="test-notice">⚠️ This uses test/mock mode - no real API calls are made</p>
+
+            <div class="form-group">
+                <label for="test-video-prompt">Describe the video you want to create:</label>
+                <textarea
+                    id="test-video-prompt"
+                    rows="4"
+                    placeholder="Drone shot following a classic red convertible along a winding coastal road at sunset, waves crashing against the rocks below. The convertible accelerates fast and the engine roars loudly."
+                    maxlength="10000"
+                ></textarea>
+                <div class="char-count">
+                    <span id="test-video-char-count">0</span>/10000 characters
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="test-video-aspect-ratio">Aspect Ratio:</label>
+                    <select id="test-video-aspect-ratio">
+                        <option value="16:9">16:9 (Landscape)</option>
+                        <option value="9:16">9:16 (Portrait)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="test-video-resolution">Resolution:</label>
+                    <select id="test-video-resolution">
+                        <option value="720p">720p</option>
+                        <option value="1080p">1080p</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="test-video-negative">Negative Prompt (optional):</label>
+                <input
+                    type="text"
+                    id="test-video-negative"
+                    placeholder="cartoon, drawing, low quality"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Quick Test Examples:</label>
+                <div class="examples">
+                    <span class="example-tag" onclick="setTestVideoPrompt('Drone shot following a classic red convertible along a winding coastal road at sunset')">Coastal Drive</span>
+                    <span class="example-tag" onclick="setTestVideoPrompt('A cinematic shot of a majestic lion walking through the savannah at golden hour')">Majestic Lion</span>
+                    <span class="example-tag" onclick="setTestVideoPrompt('Time-lapse of a bustling cityscape from dawn to dusk')">City Timelapse</span>
+                    <span class="example-tag" onclick="setTestVideoPrompt('Close-up of a butterfly emerging from its chrysalis')">Butterfly Emergence</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateTestVideo()" id="test-generate-video-btn">
+                <span class="loading" id="test-generate-video-loading"></span>
+                Generate Test Video
+            </button>
+
+            <div id="test-generate-video-result" class="result-container">
+                <div id="test-generate-video-status"></div>
+                <video id="test-generated-video" class="result-video" controls></video>
+                <button class="btn btn-secondary" onclick="downloadVideo('test-generated-video')" id="test-download-generate-video-btn">
+                    Download Test Video
                 </button>
             </div>
         </section>
