@@ -467,8 +467,8 @@ async function pollVideoStatus(operationName, section) {
             if (data.success && data.done) {
                 clearInterval(pollInterval);
 
-                if (data.video_uri) {
-                    videoElement.src = data.video_uri;
+                if (data.video) {
+                    videoElement.src = data.video;
                     videoElement.style.display = 'block';
                     resultContainer.style.display = 'block';
                     downloadBtn.style.display = 'inline-block';
@@ -479,7 +479,7 @@ async function pollVideoStatus(operationName, section) {
 
                     showStatus(`${section}-status`, 'Video generated successfully!', 'success');
                 } else {
-                    showStatus(`${section}-status`, 'Video generation completed but no download available', 'error');
+                    showStatus(`${section}-status`, 'Video generation completed but no video available', 'error');
                 }
             } else if (!data.success) {
                 clearInterval(pollInterval);
